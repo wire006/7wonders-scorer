@@ -469,6 +469,7 @@
   <div class="controls">
     <button onclick="addPlayer()">＋ プレイヤー追加</button>
     <button onclick="showRanking()">🏆 順位表示</button>
+    <button id="hideScoresBtn" onclick="toggleHideScores()">🙈 点数を隠す</button>
     <button onclick="clearInputs()" class="danger">入力をクリア</button>
     <button onclick="resetAll()" class="danger">全リセット</button>
   </div>
@@ -499,6 +500,8 @@
 const MAX_PLAYERS = 7;
 const MIN_PLAYERS = 2;
 let playerCount = 0;
+let scoresHidden = false;
+const HIDDEN_MARK = '？';
 
 function el(tag, attrs = {}, children = []) {
   const e = document.createElement(tag);
@@ -663,21 +666,23 @@ function computeScores(card) {
 function updateScores() {
   const cards = Array.from(document.querySelectorAll('.player-card'));
   const results = [];
+  const display = v => scoresHidden ? HIDDEN_MARK : String(v);
 
   cards.forEach(card => {
     const scores = computeScores(card);
 
     ['military','treasury','wonder','civilian','commercial','guild','science'].forEach(k => {
-      card.querySelector(`[data-score="${k}"]`).textContent = scores[k];
+      card.querySelector(`[data-score="${k}"]`).textContent = display(scores[k]);
     });
-    card.querySelector('[data-score="total"]').textContent = scores.total;
+    card.querySelector('[data-score="total"]').textContent = display(scores.total);
 
     const c = Math.max(0, getVal(card, 'compass'));
     const t = Math.max(0, getVal(card, 'tablet'));
     const g = Math.max(0, getVal(card, 'gear'));
     const setCount = Math.min(c, t, g);
-    card.querySelector('[data-hint="science"]').textContent =
-      `※ ${c}² + ${t}² + ${g}² + 7×${setCount} = ${scores.science}`;
+    card.querySelector('[data-hint="science"]').textContent = scoresHidden
+      ? '※ 点数を隠しています'
+      : `※ ${c}² + ${t}² + ${g}² + 7×${setCount} = ${scores.science}`;
 
     results.push({ card, total: scores.total, coins: getVal(card, 'coins') });
   });
@@ -686,12 +691,30 @@ function updateScores() {
   results.sort((a, b) => b.total - a.total || b.coins - a.coins);
   results.forEach((r, i) => {
     const rankEl = r.card.querySelector('[data-rank]');
-    rankEl.textContent = `#${i + 1}`;
+    rankEl.textContent = scoresHidden ? HIDDEN_MARK : `#${i + 1}`;
     const totalEl = r.card.querySelector('.total');
-    totalEl.classList.toggle('winner', i === 0 && results.length > 1);
+    totalEl.classList.toggle('winner', !scoresHidden && i === 0 && results.length > 1);
   });
 
   saveState();
+}
+
+function toggleHideScores() {
+  scoresHidden = !scoresHidden;
+  const btn = document.getElementById('hideScoresBtn');
+  if (btn) btn.textContent = scoresHidden ? '👀 点数を表示' : '🙈 点数を隠す';
+  try { localStorage.setItem('sevenWondersHidden', scoresHidden ? '1' : '0'); } catch (e) {}
+  updateScores();
+}
+
+function loadHideState() {
+  try {
+    scoresHidden = localStorage.getItem('sevenWondersHidden') === '1';
+  } catch (e) {
+    scoresHidden = false;
+  }
+  const btn = document.getElementById('hideScoresBtn');
+  if (btn) btn.textContent = scoresHidden ? '👀 点数を表示' : '🙈 点数を隠す';
 }
 
 function escapeHTML(s) {
@@ -839,6 +862,7 @@ if (!loadState()) {
     document.getElementById('players').appendChild(createPlayerCard(`プレイヤー${i + 1}`));
   }
 }
+loadHideState();
 updateScores();
 </script>
 </body>
