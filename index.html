@@ -99,11 +99,20 @@
     flex-shrink: 0;
   }
   .players {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
     gap: 20px;
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    padding: 6px 4px 16px;
+    scrollbar-gutter: stable;
   }
   .player-card {
+    flex: 0 0 360px;
+    scroll-snap-align: start;
     background: #fff8e7;
     border: 2px solid #8b4513;
     border-radius: 12px;
@@ -528,8 +537,13 @@ function addPlayer() {
     return;
   }
   const name = `プレイヤー${container.children.length + 1}`;
-  container.appendChild(createPlayerCard(name));
+  const card = createPlayerCard(name);
+  container.appendChild(card);
   updateScores();
+  // 追加したカードが見えるように横スクロール
+  requestAnimationFrame(() => {
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
+  });
 }
 
 function removePlayer(card) {
