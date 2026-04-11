@@ -9,6 +9,9 @@
 <meta name="format-detection" content="telephone=no">
 <title>世界の七不思議 点数計算機</title>
 <style>
+  :root {
+    --card-width: 360px;
+  }
   * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
@@ -111,13 +114,14 @@
     scrollbar-gutter: stable;
   }
   .player-card {
-    flex: 0 0 360px;
+    flex: 0 0 var(--card-width);
     scroll-snap-align: start;
     background: #fff8e7;
     border: 2px solid #8b4513;
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    transition: flex-basis 0.15s ease-out;
   }
   .player-header {
     display: flex;
@@ -304,6 +308,96 @@
     color: #8b4513;
   }
 
+  /* ========== カードサイズスライダー ========== */
+  .size-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 4px 0 20px;
+    padding: 10px 18px;
+    font-size: 14px;
+    color: #6b3410;
+    flex-wrap: wrap;
+  }
+  .size-control .size-label {
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .size-control input[type="range"] {
+    flex: 0 1 260px;
+    min-width: 180px;
+    max-width: 60vw;
+    height: 32px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    touch-action: manipulation;
+    padding: 0;
+    margin: 0;
+  }
+  .size-control input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px;
+    background: #c9a878;
+    border-radius: 4px;
+    border: 1px solid #8b4513;
+  }
+  .size-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #8b4513;
+    border: 3px solid #fff8e7;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    margin-top: -13px;
+    cursor: pointer;
+  }
+  .size-control input[type="range"]::-webkit-slider-thumb:active {
+    background: #6b3410;
+  }
+  .size-control input[type="range"]::-moz-range-track {
+    height: 8px;
+    background: #c9a878;
+    border-radius: 4px;
+    border: 1px solid #8b4513;
+  }
+  .size-control input[type="range"]::-moz-range-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #8b4513;
+    border: 3px solid #fff8e7;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    cursor: pointer;
+  }
+  .size-control output {
+    font-weight: bold;
+    min-width: 60px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+  }
+  .size-control .size-preset {
+    background: #e8d4a0;
+    color: #6b3410;
+    border: 1px solid #8b4513;
+    padding: 6px 12px;
+    min-height: 36px;
+    font-size: 13px;
+    border-radius: 6px;
+    margin: 0 2px;
+    cursor: pointer;
+    font-family: inherit;
+    touch-action: manipulation;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .size-control .size-preset:active {
+    background: #c9a878;
+  }
+
   /* ========== 順位モーダル ========== */
   .modal[hidden] { display: none; }
   .modal {
@@ -472,6 +566,15 @@
     <button id="hideScoresBtn" onclick="toggleHideScores()">🙈 点数を隠す</button>
     <button onclick="clearInputs()" class="danger">入力をクリア</button>
     <button onclick="resetAll()" class="danger">全リセット</button>
+  </div>
+
+  <div class="size-control">
+    <span class="size-label">📏 カード幅</span>
+    <button class="size-preset" type="button" onclick="setCardWidth(300)">小</button>
+    <input type="range" id="cardWidthSlider" min="280" max="600" step="20" value="360"
+           oninput="setCardWidth(this.value)" aria-label="カード幅">
+    <button class="size-preset" type="button" onclick="setCardWidth(520)">大</button>
+    <output id="cardWidthValue">360px</output>
   </div>
 
   <div id="players" class="players"></div>
@@ -707,6 +810,23 @@ function toggleHideScores() {
   updateScores();
 }
 
+function setCardWidth(w) {
+  const px = Math.max(200, Math.min(800, parseInt(w, 10) || 360));
+  document.documentElement.style.setProperty('--card-width', px + 'px');
+  const out = document.getElementById('cardWidthValue');
+  if (out) out.textContent = px + 'px';
+  const slider = document.getElementById('cardWidthSlider');
+  if (slider && parseInt(slider.value, 10) !== px) slider.value = px;
+  try { localStorage.setItem('sevenWondersCardWidth', String(px)); } catch (e) {}
+}
+
+function loadCardWidth() {
+  try {
+    const saved = localStorage.getItem('sevenWondersCardWidth');
+    if (saved) setCardWidth(saved);
+  } catch (e) {}
+}
+
 function loadHideState() {
   try {
     scoresHidden = localStorage.getItem('sevenWondersHidden') === '1';
@@ -863,6 +983,7 @@ if (!loadState()) {
   }
 }
 loadHideState();
+loadCardWidth();
 updateScores();
 </script>
 </body>
