@@ -169,12 +169,12 @@
   }
   .category-input {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     align-items: flex-end;
     margin-top: 8px;
     flex-wrap: wrap;
   }
-  .category-input label {
+  .category-input .field {
     font-size: 12px;
     color: #6b3410;
     display: flex;
@@ -182,13 +182,62 @@
     align-items: center;
     gap: 4px;
   }
-  .category-input input[type="number"] {
-    width: 68px;
-    padding: 10px 4px;
-    min-height: 44px;
+  .field-label {
+    font-size: 12px;
+    color: #6b3410;
     text-align: center;
+    line-height: 1.2;
+  }
+  .stepper {
+    display: flex;
+    align-items: stretch;
     border: 1px solid #c9a878;
     border-radius: 6px;
+    background: #fffefa;
+    overflow: hidden;
+  }
+  .stepper:focus-within {
+    border-color: #8b4513;
+    box-shadow: 0 0 0 2px rgba(139,69,19,0.2);
+  }
+  .stepper .step-btn {
+    background: #e8d4a0;
+    color: #6b3410;
+    border: none;
+    width: 36px;
+    min-height: 44px;
+    height: 44px;
+    font-size: 22px;
+    font-weight: bold;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    flex-shrink: 0;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    touch-action: manipulation;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .stepper .step-btn:active {
+    background: #c9a878;
+    transform: none;
+  }
+  .stepper input[type="number"] {
+    width: 52px;
+    min-height: 44px;
+    padding: 0 4px;
+    text-align: center;
+    border: none;
+    border-left: 1px solid #c9a878;
+    border-right: 1px solid #c9a878;
+    border-radius: 0;
     font-size: 17px;
     background: #fffefa;
     font-family: inherit;
@@ -196,15 +245,13 @@
     appearance: none;
     -moz-appearance: textfield;
   }
-  .category-input input[type="number"]::-webkit-outer-spin-button,
-  .category-input input[type="number"]::-webkit-inner-spin-button {
+  .stepper input[type="number"]::-webkit-outer-spin-button,
+  .stepper input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-  .category-input input[type="number"]:focus {
+  .stepper input[type="number"]:focus {
     outline: none;
-    border-color: #8b4513;
-    box-shadow: 0 0 0 2px rgba(139,69,19,0.2);
   }
   .hint {
     font-size: 12px;
@@ -298,6 +345,20 @@ function el(tag, attrs = {}, children = []) {
   return e;
 }
 
+function stepperHTML(label, field, opts = {}) {
+  const minAttr = opts.min != null ? `min="${opts.min}"` : '';
+  const pat = opts.allowNegative ? 'pattern="-?[0-9]*"' : 'pattern="[0-9]*"';
+  return `
+    <div class="field">
+      <span class="field-label">${label}</span>
+      <div class="stepper">
+        <button class="step-btn" type="button" data-step="-1" aria-label="減らす">−</button>
+        <input type="number" inputmode="numeric" ${pat} ${minAttr} value="0" data-field="${field}">
+        <button class="step-btn" type="button" data-step="1" aria-label="増やす">+</button>
+      </div>
+    </div>`;
+}
+
 function createPlayerCard(defaultName) {
   const id = ++playerCount;
   const card = document.createElement('div');
@@ -312,55 +373,55 @@ function createPlayerCard(defaultName) {
     <div class="category military">
       <div class="category-label"><span>⚔️ 軍事</span><span class="category-score" data-score="military">0</span></div>
       <div class="category-input">
-        <label>時代I (+1)<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="mil1"></label>
-        <label>時代II (+3)<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="mil3"></label>
-        <label>時代III (+5)<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="mil5"></label>
-        <label>敗北 (-1)<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="milLoss"></label>
+        ${stepperHTML('時代I (+1)', 'mil1', { min: 0 })}
+        ${stepperHTML('時代II (+3)', 'mil3', { min: 0 })}
+        ${stepperHTML('時代III (+5)', 'mil5', { min: 0 })}
+        ${stepperHTML('敗北 (-1)', 'milLoss', { min: 0 })}
       </div>
     </div>
 
     <div class="category treasury">
       <div class="category-label"><span>💰 財宝</span><span class="category-score" data-score="treasury">0</span></div>
       <div class="category-input">
-        <label>コイン<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="coins"></label>
+        ${stepperHTML('コイン', 'coins', { min: 0 })}
       </div>
-      <div class="hint">※ 3コインごとに1点（切り捨て）</div>
+      <div class="hint">※ 3コインごとに1点(切り捨て)</div>
     </div>
 
     <div class="category wonder">
       <div class="category-label"><span>🏛 驚異</span><span class="category-score" data-score="wonder">0</span></div>
       <div class="category-input">
-        <label>合計得点<input type="number" inputmode="numeric" pattern="-?[0-9]*" value="0" data-field="wonder"></label>
+        ${stepperHTML('合計得点', 'wonder', { allowNegative: true })}
       </div>
     </div>
 
     <div class="category civilian">
       <div class="category-label"><span>📘 民間施設 (青)</span><span class="category-score" data-score="civilian">0</span></div>
       <div class="category-input">
-        <label>合計得点<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="civilian"></label>
+        ${stepperHTML('合計得点', 'civilian', { min: 0 })}
       </div>
     </div>
 
     <div class="category commercial">
       <div class="category-label"><span>🛒 商業施設 (黄)</span><span class="category-score" data-score="commercial">0</span></div>
       <div class="category-input">
-        <label>合計得点<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="commercial"></label>
+        ${stepperHTML('合計得点', 'commercial', { min: 0 })}
       </div>
     </div>
 
     <div class="category guild">
       <div class="category-label"><span>🎭 ギルド (紫)</span><span class="category-score" data-score="guild">0</span></div>
       <div class="category-input">
-        <label>合計得点<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="guild"></label>
+        ${stepperHTML('合計得点', 'guild', { min: 0 })}
       </div>
     </div>
 
     <div class="category science">
       <div class="category-label"><span>🔬 科学 (緑)</span><span class="category-score" data-score="science">0</span></div>
       <div class="category-input">
-        <label>🧭 コンパス<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="compass"></label>
-        <label>📜 粘土板<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="tablet"></label>
-        <label>⚙ 歯車<input type="number" inputmode="numeric" pattern="[0-9]*" min="0" value="0" data-field="gear"></label>
+        ${stepperHTML('🧭 コンパス', 'compass', { min: 0 })}
+        ${stepperHTML('📜 粘土板', 'tablet', { min: 0 })}
+        ${stepperHTML('⚙ 歯車', 'gear', { min: 0 })}
       </div>
       <div class="hint" data-hint="science">※ n²の合計 + セット×7</div>
     </div>
@@ -372,6 +433,20 @@ function createPlayerCard(defaultName) {
 
   card.querySelectorAll('input').forEach(input => {
     input.addEventListener('input', updateScores);
+  });
+  card.querySelectorAll('.step-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const input = btn.parentElement.querySelector('input[type="number"]');
+      if (!input) return;
+      const step = parseInt(btn.dataset.step, 10);
+      const hasMin = input.hasAttribute('min') && input.min !== '';
+      const min = hasMin ? parseInt(input.min, 10) : -Infinity;
+      const curr = parseInt(input.value, 10) || 0;
+      const next = Math.max(min, curr + step);
+      input.value = next;
+      updateScores();
+    });
   });
   card.querySelector('[data-action="remove"]').addEventListener('click', () => removePlayer(card));
 
