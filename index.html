@@ -419,11 +419,9 @@ function removePlayer(card) {
 }
 
 function clearInputs() {
-  if (!confirm('全プレイヤーの入力をクリアしますか？（プレイヤー数は維持）')) return;
-  document.querySelectorAll('.player-card').forEach((card, idx) => {
+  if (!confirm('全プレイヤーの入力をクリアしますか？（プレイヤー名・プレイヤー数は維持）')) return;
+  document.querySelectorAll('.player-card').forEach(card => {
     card.querySelectorAll('input[type="number"]').forEach(i => i.value = '0');
-    const nameInput = card.querySelector('[data-field="name"]');
-    if (nameInput) nameInput.value = `プレイヤー${idx + 1}`;
   });
   updateScores();
 }
