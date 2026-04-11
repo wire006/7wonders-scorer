@@ -917,10 +917,6 @@ function addPlayer() {
   const card = createPlayerCard(name);
   container.appendChild(card);
   updateScores();
-  // 追加したカードが見えるように横スクロール
-  requestAnimationFrame(() => {
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
-  });
 }
 
 function removePlayer(card) {
