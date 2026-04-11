@@ -567,12 +567,10 @@
 
   <div class="size-control">
     <span class="size-label">🔍 表示倍率</span>
-    <button class="size-preset" type="button" onclick="setZoom(50)">50%</button>
     <button class="size-preset" type="button" onclick="stepZoom(-10)" aria-label="10%縮小">−10%</button>
     <input type="range" id="zoomSlider" min="50" max="150" step="10" value="100"
            oninput="setZoom(this.value)" aria-label="表示倍率">
     <button class="size-preset" type="button" onclick="stepZoom(10)" aria-label="10%拡大">+10%</button>
-    <button class="size-preset" type="button" onclick="setZoom(150)">150%</button>
     <output id="zoomValue">100%</output>
   </div>
 
@@ -814,7 +812,10 @@ function setZoom(percent) {
   if (!Number.isFinite(p)) p = 100;
   p = Math.round(p / 10) * 10;
   p = Math.max(50, Math.min(150, p));
-  document.body.style.zoom = (p / 100);
+  // スライダーより上は常に100%固定。プレイヤーカード領域のみズーム対象。
+  document.body.style.zoom = '';
+  const players = document.getElementById('players');
+  if (players) players.style.zoom = (p / 100);
   const out = document.getElementById('zoomValue');
   if (out) out.textContent = p + '%';
   const slider = document.getElementById('zoomSlider');
