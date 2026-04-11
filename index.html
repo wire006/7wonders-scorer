@@ -568,8 +568,10 @@
   <div class="size-control">
     <span class="size-label">🔍 表示倍率</span>
     <button class="size-preset" type="button" onclick="setZoom(50)">50%</button>
+    <button class="size-preset" type="button" onclick="stepZoom(-10)" aria-label="10%縮小">−10%</button>
     <input type="range" id="zoomSlider" min="50" max="150" step="10" value="100"
            oninput="setZoom(this.value)" aria-label="表示倍率">
+    <button class="size-preset" type="button" onclick="stepZoom(10)" aria-label="10%拡大">+10%</button>
     <button class="size-preset" type="button" onclick="setZoom(150)">150%</button>
     <output id="zoomValue">100%</output>
   </div>
@@ -825,6 +827,12 @@ function loadZoom() {
     const saved = localStorage.getItem('sevenWondersZoom');
     if (saved) setZoom(saved);
   } catch (e) {}
+}
+
+function stepZoom(delta) {
+  const slider = document.getElementById('zoomSlider');
+  const current = slider ? parseInt(slider.value, 10) : 100;
+  setZoom(current + delta);
 }
 
 function loadHideState() {
