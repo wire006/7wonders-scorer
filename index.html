@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>世界の七不思議 点数計算機</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans",
+                 "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    background: linear-gradient(135deg, #f4e7c5 0%, #e8d4a0 100%);
+    color: #2c1810;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  h1 {
+    text-align: center;
+    color: #6b3410;
+    font-size: 28px;
+    margin: 0 0 4px;
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #8b4513;
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  details.rules {
+    background: #fff8e7;
+    border: 1px solid #c9a878;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    font-size: 13px;
+  }
+  details.rules summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: #6b3410;
+  }
+  details.rules ul { margin: 8px 0 4px 20px; padding: 0; }
+  details.rules li { margin: 3px 0; }
+  .controls {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  button {
+    background: #8b4513;
+    color: #fff8e7;
+    border: none;
+    padding: 10px 18px;
+    font-size: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 0 4px;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  button:hover { background: #6b3410; }
+  button.danger { background: #8b2020; }
+  button.danger:hover { background: #6b1010; }
+  button.small {
+    padding: 4px 10px;
+    font-size: 13px;
+  }
+  .players {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 18px;
+  }
+  .player-card {
+    background: #fff8e7;
+    border: 2px solid #8b4513;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  }
+  .player-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #c9a878;
+  }
+  .player-header input[type="text"] {
+    flex: 1;
+    padding: 6px 8px;
+    font-size: 16px;
+    font-weight: bold;
+    border: 1px solid #c9a878;
+    border-radius: 4px;
+    background: #fffefa;
+    font-family: inherit;
+  }
+  .category {
+    margin: 6px 0;
+    padding: 8px 10px;
+    border-left: 5px solid;
+    border-radius: 4px;
+    background: #fffefa;
+  }
+  .category.military  { border-color: #c0392b; background: #fdf1ef; }
+  .category.treasury  { border-color: #d4a017; background: #fdf9e7; }
+  .category.wonder    { border-color: #7d5a00; background: #faf4e0; }
+  .category.civilian  { border-color: #2980b9; background: #eaf3fa; }
+  .category.commercial{ border-color: #e67e22; background: #fcf1e6; }
+  .category.guild     { border-color: #6c3483; background: #f3ecf7; }
+  .category.science   { border-color: #1e8449; background: #e9f7ef; }
+  .category-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .category-score {
+    background: #6b3410;
+    color: #fff8e7;
+    padding: 2px 10px;
+    border-radius: 10px;
+    min-width: 38px;
+    text-align: center;
+    font-size: 14px;
+  }
+  .category-input {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .category-input label {
+    font-size: 11px;
+    color: #6b3410;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .category-input input[type="number"] {
+    width: 54px;
+    padding: 4px;
+    text-align: center;
+    border: 1px solid #c9a878;
+    border-radius: 3px;
+    font-size: 14px;
+    background: #fffefa;
+    font-family: inherit;
+  }
+  .category-input input[type="number"]:focus {
+    outline: none;
+    border-color: #8b4513;
+    box-shadow: 0 0 0 2px rgba(139,69,19,0.2);
+  }
+  .hint {
+    font-size: 11px;
+    color: #8b4513;
+    margin-top: 4px;
+    font-style: italic;
+  }
+  .total {
+    margin-top: 12px;
+    padding: 12px;
+    background: #6b3410;
+    color: #fff8e7;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 6px;
+    letter-spacing: 1px;
+  }
+  .total.winner {
+    background: linear-gradient(135deg, #d4a017 0%, #b8860b 100%);
+    color: #fff;
+    box-shadow: 0 0 14px rgba(212,160,23,0.7);
+  }
+  .rank-badge {
+    display: inline-block;
+    background: #fff8e7;
+    color: #6b3410;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-right: 8px;
+  }
+  .total.winner .rank-badge {
+    background: #fff;
+    color: #b8860b;
+  }
+  footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 12px;
+    color: #8b4513;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>世界の七不思議 点数計算機</h1>
+  <p class="subtitle">7 Wonders Score Calculator</p>
+
+  <details class="rules">
+    <summary>得点ルール（クリックで展開）</summary>
+    <ul>
+      <li><b>⚔️ 軍事 (赤)</b>：各時代終了時の戦闘で獲得したトークンを入力。時代I勝利=+1、II=+3、III=+5、敗北=-1</li>
+      <li><b>💰 財宝 (コイン)</b>：コイン3枚につき1点（切り捨て）</li>
+      <li><b>🏛 驚異 (Wonder)</b>：建設した驚異段階に書かれた勝利点の合計を入力</li>
+      <li><b>📘 民間施設 (青)</b>：青カードに書かれた勝利点の合計を入力</li>
+      <li><b>🛒 商業施設 (黄)</b>：黄カード（主に第3時代）から得られる勝利点の合計を入力</li>
+      <li><b>🎭 ギルド (紫)</b>：紫カードから得られる勝利点の合計を入力（条件に応じて事前計算）</li>
+      <li><b>🔬 科学 (緑)</b>：コンパス🧭／粘土板📜／歯車⚙ の各数を入力。同種n個につきn²点、異種3種1セットごとに+7点</li>
+    </ul>
+    <p style="margin:6px 0 0;">参考: <span style="word-break:break-all;">https://w.atwiki.jp/bga9997/pages/131.html</span></p>
+  </details>
+
+  <div class="controls">
+    <button onclick="addPlayer()">＋ プレイヤー追加</button>
+    <button onclick="clearInputs()" class="danger">入力をクリア</button>
+    <button onclick="resetAll()" class="danger">全リセット</button>
+  </div>
+
+  <div id="players" class="players"></div>
+
+  <footer>
+    Base game 7 categories: 軍事 / 財宝 / 驚異 / 民間 / 商業 / ギルド / 科学
+  </footer>
+</div>
+
+<script>
+const MAX_PLAYERS = 7;
+const MIN_PLAYERS = 2;
+let playerCount = 0;
+
+function el(tag, attrs = {}, children = []) {
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k, v]) => {
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  });
+  children.forEach(c => e.appendChild(c));
+  return e;
+}
+
+function createPlayerCard(defaultName) {
+  const id = ++playerCount;
+  const card = document.createElement('div');
+  card.className = 'player-card';
+  card.dataset.id = id;
+  card.innerHTML = `
+    <div class="player-header">
+      <input type="text" value="${defaultName}" data-field="name" aria-label="プレイヤー名">
+      <button class="small danger" data-action="remove" aria-label="削除">×</button>
+    </div>
+
+    <div class="category military">
+      <div class="category-label"><span>⚔️ 軍事</span><span class="category-score" data-score="military">0</span></div>
+      <div class="category-input">
+        <label>時代I (+1)<input type="number" min="0" value="0" data-field="mil1"></label>
+        <label>時代II (+3)<input type="number" min="0" value="0" data-field="mil3"></label>
+        <label>時代III (+5)<input type="number" min="0" value="0" data-field="mil5"></label>
+        <label>敗北 (-1)<input type="number" min="0" value="0" data-field="milLoss"></label>
+      </div>
+    </div>
+
+    <div class="category treasury">
+      <div class="category-label"><span>💰 財宝</span><span class="category-score" data-score="treasury">0</span></div>
+      <div class="category-input">
+        <label>コイン<input type="number" min="0" value="0" data-field="coins"></label>
+      </div>
+      <div class="hint">※ 3コインごとに1点（切り捨て）</div>
+    </div>
+
+    <div class="category wonder">
+      <div class="category-label"><span>🏛 驚異</span><span class="category-score" data-score="wonder">0</span></div>
+      <div class="category-input">
+        <label>合計得点<input type="number" value="0" data-field="wonder"></label>
+      </div>
+    </div>
+
+    <div class="category civilian">
+      <div class="category-label"><span>📘 民間施設 (青)</span><span class="category-score" data-score="civilian">0</span></div>
+      <div class="category-input">
+        <label>合計得点<input type="number" min="0" value="0" data-field="civilian"></label>
+      </div>
+    </div>
+
+    <div class="category commercial">
+      <div class="category-label"><span>🛒 商業施設 (黄)</span><span class="category-score" data-score="commercial">0</span></div>
+      <div class="category-input">
+        <label>合計得点<input type="number" min="0" value="0" data-field="commercial"></label>
+      </div>
+    </div>
+
+    <div class="category guild">
+      <div class="category-label"><span>🎭 ギルド (紫)</span><span class="category-score" data-score="guild">0</span></div>
+      <div class="category-input">
+        <label>合計得点<input type="number" min="0" value="0" data-field="guild"></label>
+      </div>
+    </div>
+
+    <div class="category science">
+      <div class="category-label"><span>🔬 科学 (緑)</span><span class="category-score" data-score="science">0</span></div>
+      <div class="category-input">
+        <label>🧭 コンパス<input type="number" min="0" value="0" data-field="compass"></label>
+        <label>📜 粘土板<input type="number" min="0" value="0" data-field="tablet"></label>
+        <label>⚙ 歯車<input type="number" min="0" value="0" data-field="gear"></label>
+      </div>
+      <div class="hint" data-hint="science">※ n²の合計 + セット×7</div>
+    </div>
+
+    <div class="total">
+      <span class="rank-badge" data-rank>-</span>合計: <span data-score="total">0</span> 点
+    </div>
+  `;
+
+  card.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', updateScores);
+  });
+  card.querySelector('[data-action="remove"]').addEventListener('click', () => removePlayer(card));
+
+  return card;
+}
+
+function getVal(card, field) {
+  const elInput = card.querySelector(`[data-field="${field}"]`);
+  if (!elInput) return 0;
+  const n = parseInt(elInput.value, 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function calcMilitary(card) {
+  return getVal(card, 'mil1') * 1
+       + getVal(card, 'mil3') * 3
+       + getVal(card, 'mil5') * 5
+       - getVal(card, 'milLoss');
+}
+
+function calcTreasury(card) {
+  return Math.floor(Math.max(0, getVal(card, 'coins')) / 3);
+}
+
+function calcScience(card) {
+  const c = Math.max(0, getVal(card, 'compass'));
+  const t = Math.max(0, getVal(card, 'tablet'));
+  const g = Math.max(0, getVal(card, 'gear'));
+  return c * c + t * t + g * g + 7 * Math.min(c, t, g);
+}
+
+function updateScores() {
+  const cards = Array.from(document.querySelectorAll('.player-card'));
+  const results = [];
+
+  cards.forEach(card => {
+    const scores = {
+      military:   calcMilitary(card),
+      treasury:   calcTreasury(card),
+      wonder:     getVal(card, 'wonder'),
+      civilian:   getVal(card, 'civilian'),
+      commercial: getVal(card, 'commercial'),
+      guild:      getVal(card, 'guild'),
+      science:    calcScience(card),
+    };
+    const total = Object.values(scores).reduce((a, b) => a + b, 0);
+
+    Object.entries(scores).forEach(([k, v]) => {
+      card.querySelector(`[data-score="${k}"]`).textContent = v;
+    });
+    card.querySelector('[data-score="total"]').textContent = total;
+
+    const c = Math.max(0, getVal(card, 'compass'));
+    const t = Math.max(0, getVal(card, 'tablet'));
+    const g = Math.max(0, getVal(card, 'gear'));
+    const setCount = Math.min(c, t, g);
+    card.querySelector('[data-hint="science"]').textContent =
+      `※ ${c}² + ${t}² + ${g}² + 7×${setCount} = ${scores.science}`;
+
+    results.push({ card, total, coins: getVal(card, 'coins') });
+  });
+
+  // Ranking: total desc, coins desc as tiebreaker (official rule)
+  results.sort((a, b) => b.total - a.total || b.coins - a.coins);
+  results.forEach((r, i) => {
+    const rankEl = r.card.querySelector('[data-rank]');
+    rankEl.textContent = `#${i + 1}`;
+    const totalEl = r.card.querySelector('.total');
+    totalEl.classList.toggle('winner', i === 0 && results.length > 1);
+  });
+
+  saveState();
+}
+
+function addPlayer() {
+  const container = document.getElementById('players');
+  if (container.children.length >= MAX_PLAYERS) {
+    alert(`プレイヤーは最大${MAX_PLAYERS}人までです。`);
+    return;
+  }
+  const name = `プレイヤー${container.children.length + 1}`;
+  container.appendChild(createPlayerCard(name));
+  updateScores();
+}
+
+function removePlayer(card) {
+  const container = document.getElementById('players');
+  if (container.children.length <= MIN_PLAYERS) {
+    alert(`プレイヤーは最低${MIN_PLAYERS}人必要です。`);
+    return;
+  }
+  card.remove();
+  updateScores();
+}
+
+function clearInputs() {
+  if (!confirm('全プレイヤーの入力をクリアしますか？（プレイヤー数は維持）')) return;
+  document.querySelectorAll('.player-card').forEach((card, idx) => {
+    card.querySelectorAll('input[type="number"]').forEach(i => i.value = '0');
+    const nameInput = card.querySelector('[data-field="name"]');
+    if (nameInput) nameInput.value = `プレイヤー${idx + 1}`;
+  });
+  updateScores();
+}
+
+function resetAll() {
+  if (!confirm('全てリセットしますか？')) return;
+  localStorage.removeItem('sevenWondersState');
+  document.getElementById('players').innerHTML = '';
+  playerCount = 0;
+  for (let i = 0; i < 3; i++) {
+    document.getElementById('players').appendChild(createPlayerCard(`プレイヤー${i + 1}`));
+  }
+  updateScores();
+}
+
+function saveState() {
+  const state = [];
+  document.querySelectorAll('.player-card').forEach(card => {
+    const obj = {};
+    card.querySelectorAll('[data-field]').forEach(input => {
+      obj[input.dataset.field] = input.value;
+    });
+    state.push(obj);
+  });
+  try { localStorage.setItem('sevenWondersState', JSON.stringify(state)); } catch (e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('sevenWondersState');
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (!Array.isArray(state) || state.length < MIN_PLAYERS) return false;
+    const container = document.getElementById('players');
+    state.slice(0, MAX_PLAYERS).forEach((p, idx) => {
+      const card = createPlayerCard(p.name || `プレイヤー${idx + 1}`);
+      container.appendChild(card);
+      Object.entries(p).forEach(([k, v]) => {
+        const input = card.querySelector(`[data-field="${k}"]`);
+        if (input) input.value = v;
+      });
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Initial load
+if (!loadState()) {
+  for (let i = 0; i < 3; i++) {
+    document.getElementById('players').appendChild(createPlayerCard(`プレイヤー${i + 1}`));
+  }
+}
+updateScores();
+</script>
+</body>
+</html>
