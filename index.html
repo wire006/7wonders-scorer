@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="七不思議">
 <meta name="format-detection" content="telephone=no">
+<meta name="robots" content="noindex, nofollow">
 <title>世界の七不思議 点数計算機</title>
 <style>
   * {
@@ -556,9 +557,79 @@
     .ranking-name { font-size: 18px; }
     .ranking-total { font-size: 30px; }
   }
+
+  /* ========== パスワードゲート ========== */
+  .password-gate[hidden] { display: none; }
+  .password-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: linear-gradient(135deg, #f4e7c5 0%, #e8d4a0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .password-box {
+    background: #fff8e7;
+    border: 3px solid #8b4513;
+    border-radius: 14px;
+    padding: 32px 36px 28px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+    text-align: center;
+    max-width: 420px;
+    width: 100%;
+  }
+  .password-box h2 {
+    margin: 0 0 18px;
+    color: #6b3410;
+    font-size: 20px;
+    letter-spacing: 2px;
+  }
+  .password-box input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 18px;
+    min-height: 48px;
+    border: 2px solid #c9a878;
+    border-radius: 8px;
+    background: #fffefa;
+    font-family: inherit;
+    text-align: center;
+    letter-spacing: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .password-box input[type="password"]:focus {
+    outline: none;
+    border-color: #8b4513;
+    box-shadow: 0 0 0 3px rgba(139,69,19,0.2);
+  }
+  .password-box button {
+    margin-top: 14px;
+    width: 100%;
+    font-size: 17px;
+  }
+  .password-error {
+    color: #8b2020;
+    font-size: 14px;
+    margin-top: 12px;
+    font-weight: bold;
+  }
+  .password-error[hidden] { display: none; }
 </style>
 </head>
 <body>
+<!-- パスワードゲート -->
+<div id="passwordGate" class="password-gate" role="dialog" aria-modal="true" aria-labelledby="passwordTitle">
+  <div class="password-box">
+    <h2 id="passwordTitle">🔒 パスワードを入力</h2>
+    <input type="password" id="passwordInput" inputmode="numeric" autocomplete="off" aria-label="パスワード">
+    <button type="button" onclick="checkPassword()">ログイン</button>
+    <div id="passwordError" class="password-error" hidden>パスワードが違います</div>
+  </div>
+</div>
+
 <div class="container">
   <h1>世界の七不思議 点数計算機</h1>
   <p class="subtitle">7 Wonders Score Calculator</p>
@@ -618,6 +689,41 @@
 </div>
 
 <script>
+const APP_PASSWORD = '0';
+const AUTH_KEY = 'sevenWondersAuth';
+
+function checkPassword() {
+  const input = document.getElementById('passwordInput');
+  const err = document.getElementById('passwordError');
+  if (input.value === APP_PASSWORD) {
+    try { sessionStorage.setItem(AUTH_KEY, '1'); } catch (e) {}
+    document.getElementById('passwordGate').hidden = true;
+    input.value = '';
+    err.hidden = true;
+  } else {
+    err.hidden = false;
+    input.value = '';
+    input.focus();
+  }
+}
+
+function initAuth() {
+  let authed = false;
+  try { authed = sessionStorage.getItem(AUTH_KEY) === '1'; } catch (e) {}
+  const gate = document.getElementById('passwordGate');
+  const input = document.getElementById('passwordInput');
+  if (authed) {
+    gate.hidden = true;
+  } else {
+    gate.hidden = false;
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); checkPassword(); }
+    });
+    // 少し遅延してフォーカス (iOSキーボード表示タイミング調整)
+    requestAnimationFrame(() => input.focus());
+  }
+}
+
 const MAX_PLAYERS = 7;
 const MIN_PLAYERS = 2;
 let playerCount = 0;
@@ -1014,6 +1120,7 @@ if (!loadState()) {
 loadHideState();
 loadZoom();
 updateScores();
+initAuth();
 </script>
 </body>
 </html>
