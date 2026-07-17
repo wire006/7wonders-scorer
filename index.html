@@ -558,6 +558,118 @@
     .ranking-total { font-size: 30px; }
   }
 
+  /* ========== モードバー ========== */
+  .mode-bar {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin: 0 auto 18px;
+    max-width: 420px;
+    border: 2px solid #8b4513;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .mode-bar button {
+    flex: 1;
+    margin: 0;
+    border-radius: 0;
+    background: #fff8e7;
+    color: #6b3410;
+    min-height: 46px;
+    font-size: 15px;
+    border: none;
+    border-right: 2px solid #8b4513;
+  }
+  .mode-bar button:last-child { border-right: none; }
+  .mode-bar button.active {
+    background: #8b4513;
+    color: #fff8e7;
+  }
+  .mode-bar button:active { transform: none; }
+
+  .mode-desc {
+    text-align: center;
+    font-size: 13px;
+    color: #8b4513;
+    margin: -8px 0 18px;
+  }
+
+  /* ゲストモード時に非表示にする要素 */
+  body.mode-guest .host-only { display: none !important; }
+  body.mode-host  .guest-only { display: none !important; }
+
+  /* ゲスト用: コード発行ボタン領域 */
+  .guest-actions {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+
+  /* コード表示 / 取込モーダル内 */
+  .code-block {
+    margin-top: 14px;
+    background: #fffefa;
+    border: 1px solid #c9a878;
+    border-radius: 8px;
+    padding: 12px;
+    word-break: break-all;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: #2c1810;
+    max-height: 120px;
+    overflow-y: auto;
+    -webkit-user-select: all;
+    user-select: all;
+  }
+  #guestQrContainer canvas, #guestQrContainer img {
+    display: block;
+    margin: 6px auto 0;
+    width: 240px !important;
+    height: 240px !important;
+    background: #fff;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  body.mode-guest [data-action="remove"] { display: none; }
+  .import-area textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 10px;
+    font-size: 14px;
+    border: 2px solid #c9a878;
+    border-radius: 8px;
+    background: #fffefa;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    -webkit-appearance: none;
+    appearance: none;
+    resize: vertical;
+  }
+  .import-area textarea:focus {
+    outline: none;
+    border-color: #8b4513;
+  }
+  #scanRegion {
+    width: 100%;
+    max-width: 320px;
+    margin: 12px auto 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #scanRegion video { width: 100%; border-radius: 8px; }
+  .import-note {
+    font-size: 12px;
+    color: #8b4513;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .import-status {
+    font-size: 13px;
+    font-weight: bold;
+    margin-top: 10px;
+    text-align: center;
+  }
+  .import-status.ok { color: #1e8449; }
+  .import-status.ng { color: #8b2020; }
+
   /* ========== パスワードゲート ========== */
   .password-gate[hidden] { display: none; }
   .password-gate {
@@ -618,6 +730,8 @@
   }
   .password-error[hidden] { display: none; }
 </style>
+<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@master/qrcode.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
 </head>
 <body>
 <!-- パスワードゲート -->
@@ -634,6 +748,12 @@
   <h1>世界の七不思議 点数計算機</h1>
   <p class="subtitle">7 Wonders Score Calculator</p>
 
+  <div class="mode-bar">
+    <button id="modeHostBtn" onclick="setMode('host')">🖥 ホスト</button>
+    <button id="modeGuestBtn" onclick="setMode('guest')">📱 ゲスト</button>
+  </div>
+  <p class="mode-desc" id="modeDesc"></p>
+
   <details class="rules">
     <summary>得点ルール（クリックで展開）</summary>
     <ul>
@@ -648,13 +768,19 @@
     <p style="margin:6px 0 0;">参考: <span style="word-break:break-all;">https://w.atwiki.jp/bga9997/pages/131.html</span></p>
   </details>
 
-  <div class="controls">
+  <div class="controls host-only">
    <span class="player-count">プレイヤー数: <span id="playerCountDisplay">0</span> / 7 人</span>
     <button onclick="addPlayer()">＋ プレイヤー追加</button>
+    <button onclick="openImport()">📥 ゲスト取込</button>
     <button onclick="showRanking()">🏆 順位表示</button>
     <button id="hideScoresBtn" onclick="toggleHideScores()">点数を隠す</button>
     <button onclick="clearInputs()" class="danger">入力をクリア</button>
     <button onclick="resetAll()" class="danger">全リセット</button>
+  </div>
+
+  <div class="guest-actions guest-only">
+    <button onclick="showGuestCode()">📤 コードを発行</button>
+    <button onclick="clearInputs()" class="danger">入力をクリア</button>
   </div>
 
   <div class="size-control">
@@ -684,6 +810,46 @@
     <div id="rankingList" class="ranking-list"></div>
     <div class="modal-footer">
       <button onclick="hideRanking()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ゲスト: コード発行モーダル -->
+<div id="guestCodeModal" class="modal" hidden aria-modal="true" role="dialog" aria-labelledby="guestCodeTitle">
+  <div class="modal-backdrop" onclick="hideGuestCode()"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="guestCodeTitle">📤 送信コード</h2>
+      <button class="small danger" onclick="hideGuestCode()" aria-label="閉じる">×</button>
+    </div>
+    <p class="import-note">このQRをホストに読み取ってもらうか、下のコードをコピーして渡してください。</p>
+    <div id="guestQrContainer"></div>
+    <div id="guestCodeText" class="code-block"></div>
+    <div class="modal-footer">
+      <button onclick="copyGuestCode()">📋 コードをコピー</button>
+      <button onclick="hideGuestCode()" class="danger">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ホスト: ゲスト取込モーダル -->
+<div id="importModal" class="modal" hidden aria-modal="true" role="dialog" aria-labelledby="importTitle">
+  <div class="modal-backdrop" onclick="closeImport()"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="importTitle">📥 ゲストを取込</h2>
+      <button class="small danger" onclick="closeImport()" aria-label="閉じる">×</button>
+    </div>
+    <div class="import-area">
+      <button id="scanToggleBtn" onclick="toggleScan()">📷 カメラでQRを読み取る</button>
+      <div id="scanRegion"></div>
+      <p class="import-note">またはゲストのコードを貼り付けて「取込」を押してください。</p>
+      <textarea id="importText" placeholder="7W1... で始まるコードを貼り付け" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+      <div id="importStatus" class="import-status"></div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="importFromText()">取込</button>
+      <button onclick="closeImport()" class="danger">閉じる</button>
     </div>
   </div>
 </div>
@@ -1049,6 +1215,195 @@ function addPlayer() {
   updateScores();
 }
 
+/* ========== ホスト / ゲスト モード ========== */
+let appMode = 'host';
+const MODE_KEY = 'sevenWondersMode';
+
+function setMode(mode) {
+  appMode = (mode === 'guest') ? 'guest' : 'host';
+  document.body.classList.toggle('mode-guest', appMode === 'guest');
+  document.body.classList.toggle('mode-host', appMode === 'host');
+  const hostBtn = document.getElementById('modeHostBtn');
+  const guestBtn = document.getElementById('modeGuestBtn');
+  if (hostBtn) hostBtn.classList.toggle('active', appMode === 'host');
+  if (guestBtn) guestBtn.classList.toggle('active', appMode === 'guest');
+  const desc = document.getElementById('modeDesc');
+  if (desc) {
+    desc.textContent = appMode === 'guest'
+      ? '自分の得点を入力し「コードを発行」してホストに渡します。'
+      : 'ゲストのコードを取り込み、全員の得点を集約・順位表示します。';
+  }
+  if (appMode === 'guest') ensureGuestCard();
+  try { localStorage.setItem(MODE_KEY, appMode); } catch (e) {}
+  updateScores();
+}
+
+function ensureGuestCard() {
+  const container = document.getElementById('players');
+  if (container.children.length === 0) {
+    container.appendChild(createPlayerCard('あなた'));
+  }
+}
+
+function loadMode() {
+  let m = 'host';
+  try { m = localStorage.getItem(MODE_KEY) || 'host'; } catch (e) {}
+  setMode(m);
+}
+
+/* ---------- コードのエンコード / デコード ---------- */
+const CODE_PREFIX = '7W1';
+
+function collectCardData(card) {
+  const obj = {};
+  card.querySelectorAll('[data-field]').forEach(inp => {
+    obj[inp.dataset.field] = inp.value;
+  });
+  return obj;
+}
+
+function encodeGuest(obj) {
+  const json = JSON.stringify(obj);
+  return CODE_PREFIX + btoa(unescape(encodeURIComponent(json)));
+}
+
+function decodeGuest(code) {
+  const idx = String(code).indexOf(CODE_PREFIX);
+  if (idx === -1) throw new Error('コード形式が不正です');
+  const b64 = String(code).slice(idx + CODE_PREFIX.length).replace(/\s+/g, '');
+  const json = decodeURIComponent(escape(atob(b64)));
+  const obj = JSON.parse(json);
+  if (typeof obj !== 'object' || obj === null) throw new Error('データが不正です');
+  return obj;
+}
+
+/* ---------- ゲスト: コード発行 ---------- */
+function showGuestCode() {
+  const card = document.querySelector('#players .player-card');
+  if (!card) { alert('入力カードがありません。'); return; }
+  const data = collectCardData(card);
+  const code = encodeGuest(data);
+  document.getElementById('guestCodeText').textContent = code;
+  const qc = document.getElementById('guestQrContainer');
+  qc.innerHTML = '';
+  if (window.QRCode) {
+    try {
+      new QRCode(qc, { text: code, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
+    } catch (e) {
+      qc.innerHTML = '<p class="import-note">QR生成に失敗しました。下のコードをコピーして渡してください。</p>';
+    }
+  } else {
+    qc.innerHTML = '<p class="import-note">QRライブラリ未読込(オフライン等)。下のコードをコピーして渡してください。</p>';
+  }
+  document.getElementById('guestCodeModal').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function hideGuestCode() {
+  document.getElementById('guestCodeModal').hidden = true;
+  document.body.style.overflow = '';
+}
+
+function copyGuestCode() {
+  const code = document.getElementById('guestCodeText').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code)
+      .then(() => alert('コードをコピーしました。'))
+      .catch(() => alert('コピーに失敗しました。コードを長押しして手動でコピーしてください。'));
+  } else {
+    alert('コードを長押しして手動でコピーしてください。');
+  }
+}
+
+/* ---------- ホスト: ゲスト取込 ---------- */
+let scanner = null;
+
+function openImport() {
+  setImportStatus('', null);
+  document.getElementById('importText').value = '';
+  document.getElementById('importModal').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImport() {
+  stopScan();
+  document.getElementById('importModal').hidden = true;
+  document.body.style.overflow = '';
+}
+
+function setImportStatus(msg, ok) {
+  const el = document.getElementById('importStatus');
+  el.textContent = msg || '';
+  el.className = 'import-status' + (ok === true ? ' ok' : ok === false ? ' ng' : '');
+}
+
+function importGuest(data) {
+  const container = document.getElementById('players');
+  if (container.children.length >= MAX_PLAYERS) {
+    throw new Error(`プレイヤーは最大${MAX_PLAYERS}人までです`);
+  }
+  const card = createPlayerCard('ゲスト');
+  container.appendChild(card);
+  Object.entries(data).forEach(([k, v]) => {
+    const input = card.querySelector(`[data-field="${k}"]`);
+    if (input) input.value = v;
+  });
+  updateScores();
+}
+
+function importFromText() {
+  const raw = document.getElementById('importText').value;
+  if (!raw.trim()) { setImportStatus('コードを貼り付けてください', false); return; }
+  try {
+    const data = decodeGuest(raw);
+    importGuest(data);
+    document.getElementById('importText').value = '';
+    setImportStatus(`取込みました: ${data.name || 'ゲスト'}`, true);
+  } catch (e) {
+    setImportStatus('コードを認識できません: ' + e.message, false);
+  }
+}
+
+function toggleScan() {
+  if (scanner) { stopScan(); return; }
+  if (!window.Html5Qrcode) {
+    setImportStatus('カメラQRライブラリ未読込(オフライン等)。コード貼付をご利用ください。', false);
+    return;
+  }
+  scanner = new Html5Qrcode('scanRegion');
+  document.getElementById('scanToggleBtn').textContent = '⏹ スキャン停止';
+  scanner.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: 220 },
+    (decoded) => handleScanned(decoded),
+    () => {}
+  ).catch(err => {
+    setImportStatus('カメラを起動できません: ' + err, false);
+    scanner = null;
+    document.getElementById('scanToggleBtn').textContent = '📷 カメラでQRを読み取る';
+  });
+}
+
+function stopScan() {
+  if (!scanner) return;
+  const s = scanner;
+  scanner = null;
+  s.stop().then(() => s.clear()).catch(() => {});
+  const btn = document.getElementById('scanToggleBtn');
+  if (btn) btn.textContent = '📷 カメラでQRを読み取る';
+}
+
+function handleScanned(text) {
+  try {
+    const data = decodeGuest(text);
+    stopScan();
+    importGuest(data);
+    setImportStatus(`取込みました: ${data.name || 'ゲスト'}`, true);
+  } catch (e) {
+    // 対象外のQRは無視してスキャン継続
+  }
+}
+
 function removePlayer(card) {
   const container = document.getElementById('players');
   if (container.children.length <= MIN_PLAYERS) {
@@ -1119,6 +1474,7 @@ if (!loadState()) {
 }
 loadHideState();
 loadZoom();
+loadMode();
 updateScores();
 initAuth();
 </script>
