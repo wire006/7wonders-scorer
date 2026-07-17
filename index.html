@@ -783,6 +783,7 @@
 
   <div class="guest-actions guest-only">
     <button onclick="showGuestCode()">📤 コードを発行</button>
+    <button id="guestHideScoresBtn" onclick="toggleHideScores()">点数を表示</button>
     <button onclick="clearInputs()" class="danger">入力をクリア</button>
   </div>
 
@@ -1098,11 +1099,21 @@ function updateScores() {
   saveState();
 }
 
+function updateHideButtons() {
+  const label = scoresHidden ? '点数を表示' : '点数を隠す';
+  ['hideScoresBtn', 'guestHideScoresBtn'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.textContent = label;
+  });
+}
+
 function toggleHideScores() {
   scoresHidden = !scoresHidden;
-  const btn = document.getElementById('hideScoresBtn');
-  if (btn) btn.textContent = scoresHidden ? '点数を表示' : '点数を隠す';
-  try { localStorage.setItem('sevenWondersHidden', scoresHidden ? '1' : '0'); } catch (e) {}
+  updateHideButtons();
+  // ゲストの一時的な切替はホストの保存設定を上書きしない
+  if (appMode !== 'guest') {
+    try { localStorage.setItem('sevenWondersHidden', scoresHidden ? '1' : '0'); } catch (e) {}
+  }
   updateScores();
 }
 
@@ -1141,8 +1152,7 @@ function loadHideState() {
   } catch (e) {
     scoresHidden = false;
   }
-  const btn = document.getElementById('hideScoresBtn');
-  if (btn) btn.textContent = scoresHidden ? '点数を表示' : '点数を隠す';
+  updateHideButtons();
 }
 
 function escapeHTML(s) {
@@ -1236,7 +1246,13 @@ function setMode(mode) {
       ? '自分の得点を入力し「コードを発行」してホストに渡します。'
       : 'ゲストのコードを取り込み、全員の得点を集約・順位表示します。';
   }
-  if (appMode === 'guest') ensureGuestCard();
+  if (appMode === 'guest') {
+    ensureGuestCard();
+    scoresHidden = true; // ゲストはデフォルトで点数を隠す
+  } else {
+    try { scoresHidden = localStorage.getItem('sevenWondersHidden') === '1'; } catch (e) { scoresHidden = false; }
+  }
+  updateHideButtons();
   try { localStorage.setItem(MODE_KEY, appMode); } catch (e) {}
   updateScores();
 }
