@@ -630,6 +630,9 @@
     border-radius: 8px;
   }
   body.mode-guest [data-action="remove"] { display: none; }
+  /* ゲストは自分1人分のみ表示 (先頭カード以外を隠す。データは保持) */
+  body.mode-guest .player-card:not(:first-child) { display: none; }
+  body.mode-guest .rank-badge { display: none; }
   .import-area textarea {
     width: 100%;
     min-height: 90px;
@@ -1406,8 +1409,8 @@ function handleScanned(text) {
 
 function removePlayer(card) {
   const container = document.getElementById('players');
-  if (container.children.length <= MIN_PLAYERS) {
-    alert(`プレイヤーは最低${MIN_PLAYERS}人必要です。`);
+  if (container.children.length <= 1) {
+    alert('プレイヤーは最低1人必要です。');
     return;
   }
   card.remove();
@@ -1450,7 +1453,7 @@ function loadState() {
     const raw = localStorage.getItem('sevenWondersState');
     if (!raw) return false;
     const state = JSON.parse(raw);
-    if (!Array.isArray(state) || state.length < MIN_PLAYERS) return false;
+    if (!Array.isArray(state) || state.length < 1) return false;
     const container = document.getElementById('players');
     state.slice(0, MAX_PLAYERS).forEach((p, idx) => {
       const card = createPlayerCard(p.name || `プレイヤー${idx + 1}`);
